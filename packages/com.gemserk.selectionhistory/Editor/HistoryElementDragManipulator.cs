@@ -48,28 +48,46 @@ namespace Gemserk
         private void OnMouseUp(MouseUpEvent evt)
         {
             isPressed = false;
-            
+
             target.ReleasePointer(0);
-            
+
             if (isDragging)
             {
                 return;
             }
-            
-            var entry = selectionHistory.GetEntry(historyIndex);    
-            
+
+            var entry = selectionHistory.GetEntry(historyIndex);
+
+            if (entry == null)
+                return;
+
+            var pinButton = SelectionHistoryWindowUtils.PinMouseButton;
+            var pinModifiers = SelectionHistoryWindowUtils.PinModifiers;
+            var heldModifiers = evt.modifiers & (EventModifiers.Alt | EventModifiers.Shift | EventModifiers.Control);
+
+            if (evt.button == pinButton && heldModifiers == pinModifiers && entry.isReferenced && entry.isAsset)
+            {
+                if (FavoritesAsset.instance.IsFavorite(entry.Reference))
+                    FavoritesAsset.instance.RemoveFavorite(entry.Reference);
+                else
+                    FavoritesAsset.instance.AddFavorite(new FavoritesAsset.Favorite
+                    {
+                        reference = entry.Reference,
+                        assetPath = AssetDatabase.GetAssetPath(entry.Reference)
+                    });
+                return;
+            }
+
             if (evt.button == 0 && evt.clickCount == 1)
             {
-                // Just select the object
                 selectionHistory.SetSelection(entry.Reference);
                 Selection.activeObject = entry.Reference;
             }
-            
+
             if (evt.button == 1)
             {
-                // Just ping the object
                 SelectionHistoryWindowUtils.PingEntry(entry);
-            } 
+            }
         }
         
         private void OnClickEvent(ClickEvent evt)

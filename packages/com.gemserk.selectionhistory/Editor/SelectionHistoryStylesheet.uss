@@ -84,10 +84,18 @@
 }
 
 .history #Favorite {
-    max-width: 16px;
-    max-height: 16px;
-    right: 25px;
-    position: absolute;
+    display: none;
+}
+
+.pinnedObject {
+    background-color: #1A2D3A;
+}
+
+#PinnedSection {
+    border-bottom-width: 1px;
+    border-bottom-color: #29B6F6;
+    margin-bottom: 3px;
+    padding-bottom: 1px;
 }
 
 .history #OpenPrefabIcon {

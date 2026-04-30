@@ -59,6 +59,8 @@ namespace Gemserk
         private Button removeUnloadedButton;
         private Button removeDestroyedButton;
 
+        private VisualElement pinnedSection;
+
         private string searchText;
 
         private void GetDefaultElements()
@@ -128,24 +130,36 @@ namespace Gemserk
             visualElements.Clear();
             
             root.Add(CreateSearchToolbar());
-            
+
+            pinnedSection = new VisualElement { name = "PinnedSection" };
+            root.Add(pinnedSection);
+
             mainScrollElement = new ScrollView(ScrollViewMode.Vertical)
             {
                 name = "MainScroll"
             };
-            
+            mainScrollElement.style.flexGrow = 1;
+
             root.Add(mainScrollElement);
-            
+
             CreateMaxElements(selectionHistory, mainScrollElement);
-            
+
             var clearButton = new Button(delegate
             {
-                selectionHistory.Clear();
+                selectionHistory.History.RemoveAll(e => !FavoritesAsset.instance.IsFavorite(e.Reference));
                 ReloadRoot();
             }) {text = "Clear"};
+
+            var clearPinsButton = new Button(delegate
+            {
+                selectionHistory.History.RemoveAll(e => FavoritesAsset.instance.IsFavorite(e.Reference));
+                FavoritesAsset.instance.ClearAll();
+                ReloadRoot();
+            }) {text = "Clear Pins"};
             
             root.Add(clearButton);
-            
+            root.Add(clearPinsButton);
+
             // // this is just for development
             // var refreshButton = new Button(delegate
             // {
@@ -325,12 +339,76 @@ namespace Gemserk
             ReloadRoot();
         }
 
+        private VisualElement CreatePinnedElement(SelectionHistory.Entry entry)
+        {
+            var elementTree = historyElementViewTree.CloneTree();
+            var root = elementTree.Q<VisualElement>("Root");
+
+            root.AddToClassList("pinnedObject");
+            root.AddToClassList(entry.isSceneInstance ? "sceneObject" : "assetObject");
+
+            var label = root.Q<Label>("Name");
+            if (label != null) label.text = entry.GetName(true);
+
+            var icon = root.Q<Image>("Icon");
+            if (icon != null) icon.image = AssetPreview.GetMiniThumbnail(entry.Reference);
+
+            root.Q<Image>("Favorite")?.AddToClassList("hidden");
+            root.Q<Image>("OpenPrefabIcon")?.AddToClassList("hidden");
+
+            var pingIcon = root.Q<Image>("PingIcon");
+            if (pingIcon != null)
+            {
+                pingIcon.image = EditorGUIUtility.IconContent(UnityBuiltInIcons.searchIconName).image;
+                pingIcon.tooltip = "Locate";
+                pingIcon.RegisterCallback<MouseUpEvent>(e => SelectionHistoryWindowUtils.PingEntry(entry));
+            }
+
+            var dragArea = root.Q<VisualElement>("DragArea");
+            if (dragArea != null)
+            {
+                dragArea.RegisterCallback<MouseUpEvent>(evt =>
+                {
+                    var pinButton = SelectionHistoryWindowUtils.PinMouseButton;
+                    var pinModifiers = SelectionHistoryWindowUtils.PinModifiers;
+                    var heldModifiers = evt.modifiers & (EventModifiers.Alt | EventModifiers.Shift | EventModifiers.Control);
+
+                    if (evt.button == pinButton && heldModifiers == pinModifiers)
+                    {
+                        FavoritesAsset.instance.RemoveFavorite(entry.Reference);
+                    }
+                    else if (evt.button == 0)
+                    {
+                        selectionHistory.SetSelection(entry.Reference);
+                        Selection.activeObject = entry.Reference;
+                    }
+                    else
+                    {
+                        SelectionHistoryWindowUtils.PingEntry(entry);
+                    }
+                });
+            }
+
+            return root;
+        }
+
         private void ReloadRoot()
         {
             if (visualElements.Count != selectionHistory.historySize)
             {
                 RegenerateUI();
             }
+
+            pinnedSection.Clear();
+            var hasPins = false;
+            for (var i = 0; i < selectionHistory.GetHistoryCount(); i++)
+            {
+                var entry = selectionHistory.GetEntry(i);
+                if (entry == null || !entry.isReferenced || !FavoritesAsset.instance.IsFavorite(entry.Reference)) continue;
+                pinnedSection.Add(CreatePinnedElement(entry));
+                hasPins = true;
+            }
+            pinnedSection.style.display = hasPins ? DisplayStyle.Flex : DisplayStyle.None;
             
             var showHierarchyViewObjects =
                 EditorPrefs.GetBool(SelectionHistoryWindowUtils.HistoryShowHierarchyObjectsPrefKey, true);
@@ -366,7 +444,7 @@ namespace Gemserk
                 var visualElement = visualElements[i];
                 var entry = selectionHistory.GetEntry(i);
                 
-                if (entry == null)
+                if (entry == null || (entry.isReferenced && FavoritesAsset.instance.IsFavorite(entry.Reference)))
                 {
                     visualElement.style.display = DisplayStyle.None;
                 }
@@ -457,21 +535,7 @@ namespace Gemserk
                     }
                     
                     var favoriteAsset = visualElement.Q<Image>("Favorite");
-                    
-                    if (!SelectionHistoryWindowUtils.ShowFavoriteButton || !entry.isReferenced || !entry.isAsset)
-                    {
-                        favoriteAsset.style.display = DisplayStyle.None;
-                    }
-                    else
-                    {
-                        favoriteAsset.style.display = DisplayStyle.Flex;
-                        
-                        var isFavorite = FavoritesAsset.instance.IsFavorite(entry.Reference);
-                        
-                        favoriteAsset.image = isFavorite
-                            ? EditorGUIUtility.IconContent(UnityBuiltInIcons.favoriteIconName).image
-                            : EditorGUIUtility.IconContent(UnityBuiltInIcons.favoriteEmptyIconName).image;
-                    }
+                    favoriteAsset.style.display = DisplayStyle.None;
                     
                     var pingIcon = visualElement.Q<Image>("PingIcon");
                     if (pingIcon != null)
@@ -532,9 +596,6 @@ namespace Gemserk
                 AddMenuItemForPreference(menu, SelectionHistoryWindowUtils.ShowDestroyedObjectsKey, "Destroyed Objects",
                     "Toggle to show/hide unreferenced or destroyed objects.");
             }
-            
-            AddMenuItemForPreference(menu, SelectionHistoryWindowUtils.HistoryShowPinButtonPrefKey, "Favorite Button", 
-                "Toggle to show/hide favorite Reference button.");
             
             menu.AddItem(new GUIContent("Open preferences"), false, delegate
             {

@@ -22,7 +22,14 @@ namespace Gemserk {
         private static bool backgroundRecord;
 
         public static bool nativeKeyHandleDisabled;
-        
+
+        private static int pinMouseButton;
+        private static bool pinModifierAlt;
+        private static bool pinModifierShift;
+        private static bool pinModifierControl;
+
+        private static readonly string[] MouseButtonOptions = { "Left Click", "Right Click" };
+
         static SelectionHistoryPreferences()
         {
             // historySize = EditorPrefs.GetInt(SelectionHistoryWindowUtils.HistorySizePrefKey, defaultHistorySize);
@@ -33,6 +40,13 @@ namespace Gemserk {
             orderLastSelectedFirst = EditorPrefs.GetBool(SelectionHistoryWindowUtils.OrderLastSelectedFirstKey, false);
             backgroundRecord = EditorPrefs.GetBool(SelectionHistoryWindowUtils.BackgroundRecordKey, false);
             nativeKeyHandleDisabled = EditorPrefs.GetBool(SelectionHistoryWindowUtils.NativeKeyHandleDisabledKey, false);
+
+            pinMouseButton = SelectionHistoryWindowUtils.PinMouseButton;
+            var pinMods = SelectionHistoryWindowUtils.PinModifiers;
+            pinModifierAlt     = (pinMods & EventModifiers.Alt)     != 0;
+            pinModifierShift   = (pinMods & EventModifiers.Shift)   != 0;
+            pinModifierControl = (pinMods & EventModifiers.Control) != 0;
+
             prefsLoaded = true;
         }
 
@@ -58,6 +72,16 @@ namespace Gemserk {
                     backgroundRecord = EditorGUILayout.Toggle("Record selection while window closed", backgroundRecord);
                     nativeKeyHandleDisabled = EditorGUILayout.Toggle("Disable native mouse handle (button 4 & 5)", nativeKeyHandleDisabled);
 
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Pin Gesture", EditorStyles.boldLabel);
+                    pinMouseButton = EditorGUILayout.Popup("Mouse Button", pinMouseButton, MouseButtonOptions);
+                    EditorGUILayout.LabelField("Modifiers");
+                    EditorGUI.indentLevel++;
+                    pinModifierAlt     = EditorGUILayout.Toggle("Alt",        pinModifierAlt);
+                    pinModifierShift   = EditorGUILayout.Toggle("Shift",      pinModifierShift);
+                    pinModifierControl = EditorGUILayout.Toggle("Ctrl / Cmd", pinModifierControl);
+                    EditorGUI.indentLevel--;
+
                     if (GUI.changed) {
                         EditorPrefs.SetBool(SelectionHistoryWindowUtils.HistoryAutomaticRemoveDestroyedPrefKey, autoremoveDestroyed);
                         EditorPrefs.SetBool(SelectionHistoryWindowUtils.HistoryAutomaticRemoveUnloadedPrefKey, autoremoveUnloaded);
@@ -66,6 +90,13 @@ namespace Gemserk {
                         EditorPrefs.SetBool(SelectionHistoryWindowUtils.OrderLastSelectedFirstKey, orderLastSelectedFirst);
                         EditorPrefs.SetBool(SelectionHistoryWindowUtils.BackgroundRecordKey, backgroundRecord);
                         EditorPrefs.SetBool(SelectionHistoryWindowUtils.NativeKeyHandleDisabledKey, nativeKeyHandleDisabled);
+
+                        EditorPrefs.SetInt(SelectionHistoryWindowUtils.PinMouseButtonPrefKey, pinMouseButton);
+                        var pinMods = EventModifiers.None;
+                        if (pinModifierAlt)     pinMods |= EventModifiers.Alt;
+                        if (pinModifierShift)   pinMods |= EventModifiers.Shift;
+                        if (pinModifierControl) pinMods |= EventModifiers.Control;
+                        EditorPrefs.SetInt(SelectionHistoryWindowUtils.PinModifiersPrefKey, (int)pinMods);
 
                         // var window = EditorWindow.GetWindow<SelectionHistoryWindow>();
                         // if (window != null)

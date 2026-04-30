@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace Gemserk
 {
-    [FilePath("Gemserk/Gemserk.Favorites.asset", FilePathAttribute.Location.ProjectFolder)]
+    [FilePath("Gemserk/Gemserk.Favorites.asset", FilePathAttribute.Location.PreferencesFolder)]
     public class FavoritesAsset : ScriptableSingleton<FavoritesAsset>
     {
         [Serializable]
@@ -37,6 +37,13 @@ namespace Gemserk
         public void RemoveFavorite(Object reference)
         {
             favoritesList.RemoveAll(f => !f.reference.isBroken && f.reference.isSet && f.reference.asset == reference);
+            OnFavoritesUpdated?.Invoke(this);
+            Save(true);
+        }
+
+        public void ClearAll()
+        {
+            favoritesList.Clear();
             OnFavoritesUpdated?.Invoke(this);
             Save(true);
         }

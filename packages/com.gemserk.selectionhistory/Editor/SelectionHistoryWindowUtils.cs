@@ -24,6 +24,15 @@ namespace Gemserk
 	    public static readonly string BackgroundRecordKey = "Gemserk.SelectionHistory.BackgroundRecord";
 	    public static readonly string NativeKeyHandleDisabledKey = "Gemserk.SelectionHistory.nativeKeyHandleDisabled";
 
+	    public static readonly string PinMouseButtonPrefKey = "Gemserk.SelectionHistory.PinMouseButton";
+	    public static readonly string PinModifiersPrefKey = "Gemserk.SelectionHistory.PinModifiers";
+
+	    public static int PinMouseButton =>
+		    EditorPrefs.GetInt(PinMouseButtonPrefKey, 0);
+
+	    public static EventModifiers PinModifiers =>
+		    (EventModifiers)EditorPrefs.GetInt(PinModifiersPrefKey, (int)EventModifiers.Alt);
+
 	    public const float distanceToConsiderDrag = 10.0f;
 	    
 	    private static readonly bool debugEnabled = false;
