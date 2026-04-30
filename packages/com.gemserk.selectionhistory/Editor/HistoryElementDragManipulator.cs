@@ -70,13 +70,21 @@ namespace Gemserk
             if (evt.button == pinButton && heldModifiers == pinModifiers && entry.isReferenced)
             {
                 if (FavoritesAsset.instance.IsFavorite(entry.Reference))
+                {
                     FavoritesAsset.instance.RemoveFavorite(entry.Reference);
-                else
+                }
+                else if (entry.isAsset)
+                {
                     FavoritesAsset.instance.AddFavorite(new FavoritesAsset.Favorite
                     {
                         reference = entry.Reference,
                         assetPath = AssetDatabase.GetAssetPath(entry.Reference)
                     });
+                }
+                else
+                {
+                    FavoritesAsset.instance.PinSceneObject(entry.Reference);
+                }
                 onPinToggled?.Invoke();
                 return;
             }
