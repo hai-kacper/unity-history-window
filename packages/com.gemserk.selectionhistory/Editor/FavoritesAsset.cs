@@ -31,12 +31,16 @@ namespace Gemserk
 
         public bool IsFavorite(Object reference)
         {
-            return favoritesList.Count(f => !f.reference.isBroken && f.reference.isSet && f.reference.asset == reference) > 0;
+            if (reference == null) return false;
+            var id = reference.GetInstanceID();
+            return favoritesList.Any(f => f.reference.isSet && f.reference.instanceID == id);
         }
 
         public void RemoveFavorite(Object reference)
         {
-            favoritesList.RemoveAll(f => !f.reference.isBroken && f.reference.isSet && f.reference.asset == reference);
+            if (reference == null) return;
+            var id = reference.GetInstanceID();
+            favoritesList.RemoveAll(f => f.reference.isSet && f.reference.instanceID == id);
             OnFavoritesUpdated?.Invoke(this);
             Save(true);
         }

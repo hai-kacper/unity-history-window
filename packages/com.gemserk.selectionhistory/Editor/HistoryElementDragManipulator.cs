@@ -67,7 +67,7 @@ namespace Gemserk
             var pinModifiers = SelectionHistoryWindowUtils.PinModifiers;
             var heldModifiers = evt.modifiers & (EventModifiers.Alt | EventModifiers.Shift | EventModifiers.Control);
 
-            if (evt.button == pinButton && heldModifiers == pinModifiers && entry.isReferenced && entry.isAsset)
+            if (evt.button == pinButton && heldModifiers == pinModifiers && entry.isReferenced)
             {
                 if (FavoritesAsset.instance.IsFavorite(entry.Reference))
                     FavoritesAsset.instance.RemoveFavorite(entry.Reference);
