@@ -221,7 +221,7 @@ namespace Gemserk
             var dragArea = selectionElementRoot.Q<VisualElement>("DragArea");
             if (dragArea != null)
             {
-                dragArea.AddManipulator(new HistoryElementDragManipulator(selectionHistory, historyIndex));
+                dragArea.AddManipulator(new HistoryElementDragManipulator(selectionHistory, historyIndex, ReloadRootAndRemoveUnloadedAndDuplicated));
             }
             
             var pingIcon = selectionElementRoot.Q<Image>("PingIcon");
@@ -394,7 +394,7 @@ namespace Gemserk
 
         private void ReloadRoot()
         {
-            if (visualElements.Count != selectionHistory.historySize)
+            if (pinnedSection == null || visualElements.Count != selectionHistory.historySize)
             {
                 RegenerateUI();
             }

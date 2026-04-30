@@ -15,19 +15,21 @@ namespace Gemserk
         private readonly EventCallback<MouseMoveEvent> mouseMoveHandler;
         private readonly EventCallback<MouseUpEvent> mouseUpHandler;
         private readonly EventCallback<ClickEvent> mouseClickHandler;
-     
+
         private Vector2 startPosition;
         private bool isDragging;
         private bool isPressed;
 
         private readonly SelectionHistory selectionHistory;
         private readonly int historyIndex;
-     
-        public HistoryElementDragManipulator(SelectionHistory selectionHistory, int historyIndex)
+        private readonly System.Action onPinToggled;
+
+        public HistoryElementDragManipulator(SelectionHistory selectionHistory, int historyIndex, System.Action onPinToggled = null)
         {
             this.selectionHistory = selectionHistory;
             this.historyIndex = historyIndex;
-            
+            this.onPinToggled = onPinToggled;
+
             mouseDownHandler = OnMouseDown;
             mouseMoveHandler = OnMouseMove;
             mouseUpHandler = OnMouseUp;
@@ -75,6 +77,7 @@ namespace Gemserk
                         reference = entry.Reference,
                         assetPath = AssetDatabase.GetAssetPath(entry.Reference)
                     });
+                onPinToggled?.Invoke();
                 return;
             }
 
