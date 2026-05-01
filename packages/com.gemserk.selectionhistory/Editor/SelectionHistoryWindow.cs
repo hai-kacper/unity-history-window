@@ -535,7 +535,11 @@ namespace Gemserk
                     }
                     
                     var favoriteAsset = visualElement.Q<Image>("Favorite");
-                    favoriteAsset.style.display = DisplayStyle.None;
+                    if (favoriteAsset != null)
+                    {
+                        var showPin = SelectionHistoryWindowUtils.ShowFavoriteButton && isAsset;
+                        favoriteAsset.style.display = showPin ? DisplayStyle.Flex : DisplayStyle.None;
+                    }
                     
                     var pingIcon = visualElement.Q<Image>("PingIcon");
                     if (pingIcon != null)
@@ -582,7 +586,10 @@ namespace Gemserk
             var showHierarchyViewObjects =
                 EditorPrefs.GetBool(SelectionHistoryWindowUtils.HistoryShowHierarchyObjectsPrefKey, true);
             
-            AddMenuItemForPreference(menu, SelectionHistoryWindowUtils.HistoryShowHierarchyObjectsPrefKey, "HierarchyView Objects", 
+            AddMenuItemForPreference(menu, SelectionHistoryWindowUtils.HistoryShowPinButtonPrefKey, "Favorite Button",
+                "Toggle to show/hide the favorite pin button on history items.");
+
+            AddMenuItemForPreference(menu, SelectionHistoryWindowUtils.HistoryShowHierarchyObjectsPrefKey, "HierarchyView Objects",
                 "Toggle to show/hide objects from scene hierarchy view.");
 		 
             if (showHierarchyViewObjects && !SelectionHistoryWindowUtils.AutomaticRemoveUnloaded)
